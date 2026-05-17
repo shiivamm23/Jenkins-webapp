@@ -1,5 +1,7 @@
 pipeline {
-    agent { label 'Frontend' }
+    agent { 
+        label 'Frontend' 
+    }
 
     environment {
         APP_SERVER = "172.31.41.110"
@@ -23,21 +25,20 @@ pipeline {
         stage('Post Build Actions') {
             steps {
                 sh """
+                    echo 'Cleaning old files on app server'
 
-                echo 'Cleaning old files on app server'
+                    ssh -o StrictHostKeyChecking=no jenkins@${APP_SERVER} 'rm -rf ${DEPLOY_DIR}/*'
 
-                ssh jenkins@${APP_SERVER} 'rm -rf ${DEPLOY_DIR}/*'
+                    echo 'Copying frontend build files'
 
-                echo 'Copying frontend build'
+                    scp -o StrictHostKeyChecking=no -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
 
-                scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
+                    echo 'Restarting nginx service'
 
-                echo 'Restarting nginx'
+                    ssh -o StrictHostKeyChecking=no jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
 
-                ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
-
+                    echo 'Deployment completed successfully'
                 """
             }
         }
     }
-}
