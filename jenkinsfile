@@ -1,54 +1,8 @@
-pipeline {
-    agent { 
-        label 'Frontend' 
-    }
-
-    environment {
-        APP_SERVER = "172.31.41.110"
-        DEPLOY_DIR = "/var/www/html"
-    }
-
-    stages {
-
-        stage('Pre Build Actions') {
-            steps {
-                sh 'npm install'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'npm run build'
-            }
-        }
-
-        stage('Post Build Actions') {
-            steps {
-                sh """
-                    echo 'Cleaning old files on app server'
-
-                    ssh -o StrictHostKeyChecking=no jenkins@${APP_SERVER} 'rm -rf ${DEPLOY_DIR}/*'
-
-                    echo 'Copying frontend build files'
-
-                    scp -o StrictHostKeyChecking=no -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
-
-                    echo 'Restarting nginx service'
-
-                    ssh -o StrictHostKeyChecking=no jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
-
-                    echo 'Deployment completed successfully'
-                """
-            }
-        }
-    }
-
-
 pipeline{
     agent {label 'Frontend'}
     environment {
 
-        APP_SERVER = "172.31.37.135"
+        APP_SERVER = "172.31.41.110"
         DEPLOY_DIR = "/var/www/html"
     }
     stages{
