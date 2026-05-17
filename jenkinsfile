@@ -1,22 +1,27 @@
-pipeline{
-    agent {label 'Frontend'}
+pipeline {
+    agent { label 'Frontend' }
+
     environment {
         APP_SERVER = "172.31.41.110"
-        DEPLOY_DIR =  "/var/www/html"
+        DEPLOY_DIR = "/var/www/html"
     }
-    stages{
-        stage('Pre Build Actions'){
-            steps{
+
+    stages {
+
+        stage('Pre Build Actions') {
+            steps {
                 sh 'npm install'
             }
         }
-        stage('Build'){
-            steps{
+
+        stage('Build') {
+            steps {
                 sh 'npm run build'
             }
         }
-        stage('Post Build Actions'){
-            steps{
+
+        stage('Post Build Actions') {
+            steps {
                 sh """
 
                 echo 'Cleaning old files on app server'
@@ -27,13 +32,12 @@ pipeline{
 
                 scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
 
-                echo 'Restarting nigix'
+                echo 'Restarting nginx'
 
-                ssh jenkins@${APP_SERVER} 'sudo systemcl restart nginx'
+                ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
 
                 """
             }
-            }
         }
     }
-
+}
