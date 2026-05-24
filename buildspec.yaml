@@ -14,7 +14,7 @@ phases:
     - npm run build
   post_build:
     commands:
-    - echo Build completed on 'date'
+    - echo Build completed on `date`
     - mkdir deploy
     - cp -r dist deploy/dist
     - mv appspec.yaml appspec.yml
