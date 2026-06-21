@@ -1,6 +1,6 @@
 pipeline{
     agent any
-    stages{'deployment'{
+    stages('deployment'){
         steps{
             ssh """
            ssh ubuntu@52.66.195.206 '''
