@@ -13,14 +13,14 @@ services:
       - mysql-data:/var/lib/mysql
 
   backend:
-    image: backendv1:latest
+    image: shivammupadhyayy/backendv1:latest
     container_name: backend
     restart: always
     depends_on:
       - mysql
 
   frontend:
-    image: frontend:v1
+    image: shivammupadhyayy/frontend:v1
     container_name: frontend
     restart: always
     depends_on:
