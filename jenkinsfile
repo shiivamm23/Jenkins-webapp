@@ -12,54 +12,59 @@ pipeline {
         SERVICE_NAME = 'frontend-4871'
     }
 
-    stages {
-
-        stage('Checkout') {
-            steps {
+     stages{
+        stage('Checkout'){
+            steps{
                 checkout scm
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
+        stage('Build Docker Image'){
+            steps{
                 sh """
-                docker build -f docker/dockerfile -t ${REPOSITORY}:${IMAGE_TAG} .
+                docker build  -f docker/dockerfile -t ${REPOSITORY}:${IMAGE_TAG} .
                 """
             }
         }
-
-        stage('Login to AWS ECR') {
+        stage('Login to AWS ECR'){
             steps {
                 withCredentials([
                     string(credentialsId: 'ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
-
                     sh """
-                    export AWS_DEFAULT_REGION=${AWS_REGION}
+                        export AWS_DEFAULT_REGION=${AWS_REGION}
 
-                    aws sts get-caller-identity
+                        aws sts get-caller-identity
 
-                    aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login \
-                    --username AWS \
-                    --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login \
+                        --username AWS \
+                        --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                     """
                 }
             }
         }
-
-        stage('Tag and Push Docker Image to ECR') {
-            steps {
+        stage ('Login to AWS CLI'){
+            steps{
                 sh """
-                docker tag ${REPOSITORY}:${IMAGE_TAG} ${ECR_URI}
-                docker push ${ECR_URI}
+                aws configure set aws_access_key_id ${ACCESS_KEY_ID}
+                aws configure set aws_secret_access_key ${SECRET_ACCESS_KEY}
+                aws configure set default.region ${AWS_REGION}
                 """
             }
         }
-
-        stage('Deploy to ECS Service') {
-            steps {
+        stage('Tag and Push Docker Image to ECR'){
+            steps{
+                sh """
+                docker tag ${REPOSITORY}:${IMAGE_TAG} ${ECR_URI}
+                docker tag ${REPOSITORY}:${IMAGE_TAG} ${ECR_URI}:latest
+                docker push ${ECR_URI}
+                docker push ${ECR_URI}:latest
+                """
+            }
+        }
+        stage('Deploy to ECS Service'){
+            steps{
                 sh """
                 aws ecs update-service \
                 --cluster ${CLUSTER_NAME} \
@@ -69,15 +74,13 @@ pipeline {
             }
         }
     }
-
-    post {
-        success {
+    post{
+        success{
             echo "Deployment Successful!"
             cleanWs()
             sh 'docker image prune -f'
         }
-
-        failure {
+        failure{
             echo "Deployment Failed!"
             cleanWs()
         }
